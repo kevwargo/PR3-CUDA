@@ -15,56 +15,56 @@ using namespace std;
 //Kernel
 __global__ void reduce0(int *g_idata, int *g_odata, int size) {
 	
-	//Tablica wartoœci do zsumowania w pamiêci wspó³dzielonej (w obrêbie bloku)
+	//Tablica wartoÅ›ci do zsumowania w pamiÄ™ci wspÃ³Å‚dzielonej (w obrÄ™bie bloku)
 	extern __shared__ int sdata[];
 	
-	//Pobierz id w¹tku (w bloku)
+	//Pobierz id wÄ…tku (w bloku)
 	unsigned int tid = threadIdx.x;
-	//Oblicz globalny id w¹tku (we wszystkich blokach)
+	//Oblicz globalny id wÄ…tku (we wszystkich blokach)
 	unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-	//Wyzeru pozycjê w tablicy odpowiadaj¹cej w¹tkowi
+	//Wyzeru pozycjÄ™ w tablicy odpowiadajÄ…cej wÄ…tkowi
 	sdata[tid] = 0;
 	if(i < size)
-		//Pobierz wartoœæ do pamiêci wspó³dzielonej
+		//Pobierz wartoÅ›Ä‡ do pamiÄ™ci wspÃ³Å‚dzielonej
 		sdata[tid] = g_idata[i];
-	//Synchronizacja (aby wszystkie w¹tki zd¹¿y³y pobraæ dane)
+	//Synchronizacja (aby wszystkie wÄ…tki zdÄ…Å¼yÅ‚y pobraÄ‡ dane)
 	__syncthreads();
 	
 	//Sumowanie
 	for(unsigned int s=1; s < blockDim.x; s *= 2) {
-		//Je¿eli id w¹tku jest parzysty ...
+		//JeÅ¼eli id wÄ…tku jest parzysty ...
         if (tid % (2*s) == 0) {
-			//... zlicz wartoœæ swoj¹ i nieparzystego s¹siada
+			//... zlicz wartoÅ›Ä‡ swojÄ… i nieparzystego sÄ…siada
 			sdata[tid] += sdata[tid + s];
         }
-		//Synchronizacja (aby wszystkie w¹tki zd¹¿y³y posumowaæ)
+		//Synchronizacja (aby wszystkie wÄ…tki zdÄ…Å¼yÅ‚y posumowaÄ‡)
         __syncthreads();
     }
 	
-	//Zapisz rezultat z tego bloku do pamiêci
+	//Zapisz rezultat z tego bloku do pamiÄ™ci
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
 int main(void) {
 	//Deklaracja rozmiaru
 	int size = 939289;
-	//Wektor wejœciowy hosta
+	//Wektor wejÅ›ciowy hosta
 	thrust::host_vector<int> data_h_i(size, 1);
 
-	//Liczba w¹tków na blok
+	//Liczba wÄ…tkÃ³w na blok
 	int threadsPerBlock = 1024;
-	//Liczba bloków (na pocz¹tku)
+	//Liczba blokÃ³w (na poczÄ…tku)
 	int totalBlocks = (size+(threadsPerBlock-1))/threadsPerBlock;
 
-	//Wektor wejœciowy i wyjœciowy device
+	//Wektor wejÅ›ciowy i wyjÅ›ciowy device
 	thrust::device_vector<int> data_v_i = data_h_i;
 	thrust::device_vector<int> data_v_o(totalBlocks);
 
-	//WskaŸniki na wektory device
+	//WskaÅºniki na wektory device
 	int* output = thrust::raw_pointer_cast(data_v_o.data());
 	int* input = thrust::raw_pointer_cast(data_v_i.data());
 	
-	//Czy kolej na zamianê tablicy wejœciowej z wyjœciow¹?
+	//Czy kolej na zamianÄ™ tablicy wejÅ›ciowej z wyjÅ›ciowÄ…?
 	bool turn = true;
 	
 	cudaError_t error;
@@ -97,21 +97,21 @@ int main(void) {
 	
 	while(true) {	
 		if(turn) {
-			//Odpal kernel (tablica wejœciowa jako input, wyjœciowa jako output
+			//Odpal kernel (tablica wejÅ›ciowa jako input, wyjÅ›ciowa jako output
 			reduce0<<<totalBlocks, threadsPerBlock, threadsPerBlock*sizeof(int)>>>(input, output, size);
 			turn = false;
 		} else {
-			//Odpal kernel (tablica wyjœciowa jako input, wejœciowa jako output
+			//Odpal kernel (tablica wyjÅ›ciowa jako input, wejÅ›ciowa jako output
 			reduce0<<<totalBlocks, threadsPerBlock, threadsPerBlock*sizeof(int)>>>(output, input, size);
 			turn = true;
 		}
 		
-		//Je¿eli zosta³ jeden blok, to obliczenia zosta³y zakoñczone
+		//JeÅ¼eli zostaÅ‚ jeden blok, to obliczenia zostaÅ‚y zakoÅ„czone
 		if(totalBlocks == 1) break;
 		
-		//Korzystaj tylko z zakresu tablicy odpowiadaj¹cemu liczbie bloków z poprzedniej iteracji
+		//Korzystaj tylko z zakresu tablicy odpowiadajÄ…cemu liczbie blokÃ³w z poprzedniej iteracji
 		size = totalBlocks;
-		//Oblicz now¹ liczbê bloków
+		//Oblicz nowÄ… liczbÄ™ blokÃ³w
 		totalBlocks = ceil((double)totalBlocks/threadsPerBlock);
 	}
 	
@@ -141,18 +141,18 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 	
-	//Wektor wyjœciowy hosta
+	//Wektor wyjÅ›ciowy hosta
 	thrust::host_vector<int> data_h_o;
 	  
 	//Pobierz wynik
 	if(turn)
-		//Wynik w tablicy wejœciowej device
+		//Wynik w tablicy wejÅ›ciowej device
 		data_h_o = data_v_i;
 	else
-		//Wynik w tablicy wyjœciowej device
+		//Wynik w tablicy wyjÅ›ciowej device
 		data_h_o = data_v_o;
 	
-	//Wyczyœæ wektory
+	//WyczyÅ›Ä‡ wektory
 	data_v_i.clear();
 	data_v_i.shrink_to_fit();
 	  

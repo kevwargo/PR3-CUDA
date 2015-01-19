@@ -83,21 +83,21 @@ int main(void){
 	
 	while(true) {	
 		if(turn) {
-			//Odpal kernel (tablica wejúciowa jako input, wyjúciowa jako output
+			//Odpal kernel (tablica wej≈õciowa jako input, wyj≈õciowa jako output
 			reduce0<<<totalBlocks, threadsPerBlock, threadsPerBlock*sizeof(int)>>>(input, output, size);
 			turn = false;
 		} else {
-			//Odpal kernel (tablica wyjúciowa jako input, wejúciowa jako output
+			//Odpal kernel (tablica wyj≈õciowa jako input, wej≈õciowa jako output
 			reduce0<<<totalBlocks, threadsPerBlock, threadsPerBlock*sizeof(int)>>>(output, input, size);
 			turn = true;
 		}
 		
-		//Jeøeli zosta≥ jeden blok, to obliczenia zosta≥y zakoÒczone
+		//Je≈ºeli zosta≈Ç jeden blok, to obliczenia zosta≈Çy zako≈Ñczone
 		if(totalBlocks == 1) break;
 		
-		//Korzystaj tylko z zakresu tablicy odpowiadajπcemu liczbie blokÛw z poprzedniej iteracji
+		//Korzystaj tylko z zakresu tablicy odpowiadajƒÖcemu liczbie blok√≥w z poprzedniej iteracji
 		size = totalBlocks;
-		//Oblicz nowπ liczbÍ blokÛw
+		//Oblicz nowƒÖ liczbƒô blok√≥w
 		totalBlocks = ceil((double)totalBlocks/threadsPerBlock);
 	}
 	
@@ -127,18 +127,18 @@ int main(void){
         exit(EXIT_FAILURE);
     }
 	
-	//Wektor wyjúciowy hosta
+	//Wektor wyj≈õciowy hosta
 	thrust::host_vector<int> data_h_o;
 	  
 	//Pobierz wynik
 	if(turn)
-		//Wynik w tablicy wejúciowej device
+		//Wynik w tablicy wej≈õciowej device
 		data_h_o = data_v_i;
 	else
-		//Wynik w tablicy wyjúciowej device
+		//Wynik w tablicy wyj≈õciowej device
 		data_h_o = data_v_o;
 	
-	//WyczyúÊ wektory
+	//Wyczy≈õƒá wektory
 	data_v_i.clear();
 	data_v_i.shrink_to_fit();
 	  
