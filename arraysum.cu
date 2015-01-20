@@ -3,7 +3,8 @@
 
 // Utilities and system includes
 #include <algorithm>
-
+#include <stdio.h>
+#include <stdlib.h>
 
 
 
@@ -49,8 +50,10 @@ void cleanup(cudaError_t status)
 int main(int argc, char **argv)
 {
 	int size = 1024;
+	int bytes = size * sizeof(double);
 	int threads = 1024;
-	double *hostData = (double *)malloc(size * sizeof(double));
+	int blocks = 1;
+	double *hostData = (double *)malloc(bytes);
 	for (int i = 0; i<size; i++)
 		hostData[i] = (rand() & 0xFF) / (double)RAND_MAX;
 	
@@ -62,11 +65,46 @@ int main(int argc, char **argv)
 		printf("Error setting device 0: %d\n", exitcode);
 		cleanup(exitcode);
 	}
-	exitcode = reduceWithCuda(hostData, size);
-	if (exitcode != cudaSuccess)
+	
+	double *devInputData;
+	exitcode = cudaMalloc(&devInputData, bytes);
+	if (exitcode != cudaSucces)
 	{
-		printf("Error in reduceWithCuda %d!!!\n", exitcode);
+		printf("Error in cudaMalloc %d\n", exitcode);
 		cleanup(exitcode);
 	}
+
+	double *devOutputData;
+	exitcode = cudaMalloc(&devOutputData, sizeof(double));
+	if (exitcode != cudaSucces)
+	{
+		printf("Error in cudaMalloc for output %d\n", exitcode);
+		cleanup(exitcode);
+	}
+
+	exitcode = cudaMemcpy(devInputData, hostData, bytes, cudaMemcpyHostToDevice);
+	if (exitcode != cudaSucces)
+	{
+		printf("Error in cudaMemcpy to device %d\n", exitcode);
+		cleanup(exitcode);
+	}
+
+	dim3 dimBlock(threads, 1, 1);
+	dim3 dimGrid(blocks, 1, 1);
+
+	reduce0 << <dimGrid, dimBlock >> >(devInputData, devOutputData, bytes);
+
+	exitcode = cudaGetLastError();
+	if (exitcode != cudaSuccess) {
+		fprintf(stderr, "reduce0 launch failed: %s\n", cudaGetErrorString(exitcode));
+		cleanup(exitcode);
+	}
+
+	exitcode = cudaDeviceSynchronize();
+	if (exitcode != cudaSuccess) {
+		fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", exitcode);
+		cleanup(exitcode);
+	}
+
 	cleanup(cudaSuccess);
 }
