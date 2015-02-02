@@ -1,0 +1,10 @@
+Name,Start Time(ns),Duration(ns),GridX,GridY,GridZ,BlockX,BlockY,BlockZ,Registers/Thread,Static Shared Memory,Dynamic Shared Memory,Size(bytes),Throughput(bytes/sec),Achieved Occupancy,Global Memory Load Efficiency(%),Global Memory Store Efficiency(%),Floating Point Operations(Double Precision),Executed IPC,gld request,gst request,divergent branch,sm cta launched
+"Memcpy HtoD [sync]",106815933,3358194,,,,,,,,,,8388608,2497952173,,,,,,,,,
+"void reduce1<double>(double*, double*)",110269735,13437277,32768,1,1,32,1,1,10,0,256,,,0,162,99,988,25,1015808,0,754,32768,32768,196608,32774
+"Memcpy DtoH [sync]",123869688,2560,,,,,,,,,,8,3125000,,,,,,,,,
+"Memcpy HtoD [sync]",147641975,3571282,,,,,,,,,,8388608,2348906639,,,,,,,,,
+"void reduce2<double>(double*, double*)",151336612,10309367,32768,1,1,32,1,1,10,0,256,,,0,16,99,976,25,1015808,0,602,32768,32768,196608,32782
+"Memcpy DtoH [sync]",161788766,2560,,,,,,,,,,8,3125000,,,,,,,,,
+"Memcpy HtoD [sync]",185373759,3537137,,,,,,,,,,8388608,2371581309,,,,,,,,,
+"void reduce3<double>(double*, double*)",189033948,9901846,32768,1,1,32,1,1,10,0,256,,,0,16,99,951,25,1015808,0,657,32768,32768,196608,32784
+"Memcpy DtoH [sync]",199053767,2560,,,,,,,,,,8,3125000,,,,,,,,,

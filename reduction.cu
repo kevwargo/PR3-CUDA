@@ -81,9 +81,12 @@ __global__ void reduce3(T *g_idata, T *g_odata)
 
 
 template <typename T>
-void test( void reduce(T *, T *))
+void test( void reduce(T *, T *), int elements, int threadsperblock)
 {
 	cudaError_t error;
+
+	
+
 	cudaEvent_t start;
 	error = cudaEventCreate(&start);
 
@@ -106,7 +109,7 @@ void test( void reduce(T *, T *))
 	error = cudaEventRecord(start, NULL);
 
 	// create array of 256k elements
-	const uint num_elements = 1 << 20;
+	const uint num_elements = (1 << elements);
 
 	// generate random input on the host
 	std::vector<T> h_input(num_elements);
@@ -123,7 +126,7 @@ void test( void reduce(T *, T *))
 	cudaMalloc((void**)&d_input, sizeof(T)* num_elements);
 	cudaMemcpy(d_input, &h_input[0], sizeof(T)* num_elements, cudaMemcpyHostToDevice);
 
-	const size_t block_size = 1 << 10;
+	const size_t block_size = 1 << threadsperblock;
 	const size_t num_blocks = (num_elements / block_size);
 
 	// allocate space to hold one partial sum per block, plus one additional
@@ -189,13 +192,31 @@ void test( void reduce(T *, T *))
 	cudaFree(d_partial_sums_and_total);
 	std::cout << std::endl;
 }
-int main(void)
+int main(int argc, char **argv)
 {
-	
+	cudaError_t error = cudaSetDevice(0);
+	if (error != cudaSuccess)
+	{
+		fprintf(stderr, "Failed to set CUDA device (error code %s)!\n", cudaGetErrorString(error));
+		exit(EXIT_FAILURE);
+	}
 
-	test<double>(reduce1<double>);
-	test<double>(reduce2<double>);
-	test<double>(reduce3<double>);
+	if (argc < 3)
+	{
+		fprintf(stderr, "usage: %s number_of_elements threads_per_block\n");
+		cudaDeviceReset();
+		return 1;
+	}
+
+	int elements = atoi(argv[1]);
+	int tpb = atoi(argv[2]);
+
+	test<double>(reduce1<double>, elements, tpb);
+	test<double>(reduce2<double>, elements, tpb);
+	test<double>(reduce3<double>, elements, tpb);
+
+	cudaDeviceReset();
+
 	return 0;
 	
 }
